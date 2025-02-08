@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Video Control Panel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        
+        .control-panel {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .button-group {
+            margin-bottom: 20px;
+        }
+        
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        .slider-container {
+            margin: 20px 0;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 15px;
+            border-radius: 5px;
+            background: #d3d3d3;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #4CAF50;
+            cursor: pointer;
+        }
+        
+        .info-panel {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e9e9e9;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="control-panel">
+        <div class="button-group">
+            <button id="playButton">Play</button>
+            <button id="pauseButton">Pause</button>
+            <button id="stopButton">Stop</button>
+        </div>
+        
+        <div class="button-group">
+            <button id="prevFrameButton">Previous Frame</button>
+            <button id="nextFrameButton">Next Frame</button>
+        </div>
+        
+        <div class="slider-container">
+            <label>Position:</label>
+            <input type="range" min="0" max="100" value="0" class="slider" id="positionSlider">
+        </div>
+        
+        <div class="slider-container">
+            <label>Speed:</label>
+            <input type="range" min="0" max="200" value="100" class="slider" id="speedSlider">
+        </div>
+        
+        <div class="info-panel">
+            <div>Current Time: <span id="currentTime">0:00</span></div>
+            <div>Duration: <span id="duration">0:00</span></div>
+            <div>Frame: <span id="currentFrame">0</span> / <span id="totalFrames">0</span></div>
+            <div>Speed: <span id="currentSpeed">1.0</span>x</div>
+        </div>
+    </div>
+
+    <script>
+        // Функции управления видео
+        document.getElementById('playButton').onclick = function() {
+            videoControl.play();
+        };
+        
+        document.getElementById('pauseButton').onclick = function() {
+            videoControl.pause();
+        };
+        
+        document.getElementById('stopButton').onclick = function() {
+            videoControl.stop();
+        };
+        
+        document.getElementById('prevFrameButton').onclick = function() {
+            videoControl.previousFrame();
+        };
+        
+        document.getElementById('nextFrameButton').onclick = function() {
+            videoControl.nextFrame();
+        };
+        
+        document.getElementById('positionSlider').oninput = function() {
+            videoControl.setPosition(this.value / 100);
+        };
+        
+        document.getElementById('speedSlider').oninput = function() {
+            videoControl.setSpeed(this.value / 100);
+        };
+        
+        // Функция обновления информации
+        function updateInfo(info) {
+            document.getElementById('currentTime').textContent = info.currentTime;
+            document.getElementById('duration').textContent = info.duration;
+            document.getElementById('currentFrame').textContent = info.currentFrame;
+            document.getElementById('totalFrames').textContent = info.totalFrames;
+            document.getElementById('currentSpeed').textContent = info.speed.toFixed(1);
+            document.getElementById('positionSlider').value = info.position * 100;
+        }
+
+        // Периодическое обновление информации
+        setInterval(function() {
+            var info = videoControl.getVideoInfo();
+            updateInfo(info);
+        }, 100);
+    </script>
+</body>
+</html> 
