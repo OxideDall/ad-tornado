@@ -1,10 +1,3 @@
 plan
 build/
-.vscode/
-.idea/
-*.user
-*.suo
-*.db
-*.opendb build/
-*.o
-*.a
+deps/

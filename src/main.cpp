@@ -1,52 +1,79 @@
 #include "ofMain.h"
 #include "MainApp.h"
-#include "CefApp.h"
-#include <include/cef_app.h>
+#include "include/cef_app.h"
+#include "web/CefBrowserApp.h"
 #include <filesystem>
 
-int main(int argc, char* argv[]) {
-    // Get absolute path to executable directory
-    std::string exePath = std::filesystem::absolute(ofFilePath::getCurrentExeDir()).string();
-    
+void printUsage()
+{
+    std::cout << "Usage: " << std::endl;
+    std::cout << "  --html <path>  : Path to HTML file (default: data/html/index.html)" << std::endl;
+    std::cout << "  --video <path> : Path to video file (default: data/video/test.mp4)" << std::endl;
+}
+
+int main(int argc, char *argv[])
+{
+    // Parse command line arguments
+    std::string htmlPath = "data/html/index.html";
+    std::string videoPath = "data/video/test.mp4";
+
+    for (int i = 1; i < argc; i++)
+    {
+        std::string arg = argv[i];
+        if (arg == "--html" && i + 1 < argc)
+        {
+            htmlPath = argv[++i];
+        }
+        else if (arg == "--video" && i + 1 < argc)
+        {
+            videoPath = argv[++i];
+        }
+        else if (arg == "--help" || arg == "-h")
+        {
+            printUsage();
+            return 0;
+        }
+    }
+
     // Initialize CEF
     CefMainArgs main_args(argc, argv);
-    CefRefPtr<MyCefApp> app(new MyCefApp());
-    
-    int exit_code = CefExecuteProcess(main_args, app.get(), nullptr);
-    if (exit_code >= 0) {
-        return exit_code;
-    }
-    
     CefSettings settings;
     settings.no_sandbox = true;
     settings.windowless_rendering_enabled = true;
-    
-    // Set CEF resource paths
+    settings.external_message_pump = true;
+    settings.multi_threaded_message_loop = false;
+    settings.command_line_args_disabled = false;
+
+    // Set paths
+    std::string exePath = std::filesystem::canonical("/proc/self/exe").parent_path().string();
     CefString(&settings.resources_dir_path) = exePath;
     CefString(&settings.locales_dir_path) = exePath + "/locales";
-    CefString(&settings.framework_dir_path) = exePath;
-    
-    // Set ICU data path
-    std::string icuPath = exePath + "/icudtl.dat";
-    if (!std::filesystem::exists(icuPath)) {
-        ofLogError("main") << "ICU file not found at: " << icuPath;
+    CefString(&settings.cache_path) = exePath + "/cache";
+
+    // Create CEF app
+    CefRefPtr<CefBrowserApp> cef_app(new CefBrowserApp());
+
+    // Initialize CEF
+    if (!CefInitialize(main_args, settings, cef_app.get(), nullptr))
+    {
+        std::cerr << "Failed to initialize CEF" << std::endl;
         return 1;
     }
-    ofLogNotice("main") << "Using ICU file at: " << icuPath;
-    CefString(&settings.resources_dir_path).FromString(exePath);
-    
-    if (!CefInitialize(main_args, settings, app.get(), nullptr)) {
-        ofLogError("main") << "Failed to initialize CEF";
-        return 1;
-    }
-    
-    // Create OF window
-    ofSetupOpenGL(1024, 768, OF_WINDOW);
-    
-    // Run application
-    auto mainApp = std::make_shared<MainApp>();
-    ofRunApp(mainApp);
-    
+
+    // Create OpenGL window
+    ofGLFWWindowSettings windowSettings;
+    windowSettings.setSize(1280, 720);
+    windowSettings.windowMode = OF_WINDOW;
+    windowSettings.setGLVersion(3, 2);
+    ofCreateWindow(windowSettings);
+
+    // Create and start app
+    auto app = make_shared<MainApp>();
+    app->setHtmlPath(htmlPath);
+    app->setVideoPath(videoPath);
+    ofRunApp(app);
+
+    // Cleanup
     CefShutdown();
     return 0;
-} 
+}

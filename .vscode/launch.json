@@ -1,0 +1,31 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/bin/ad-tornado",
+      "args": [
+        "--html",
+        "data/html/index.html",
+        "--video",
+        "data/video/test.mp4"
+      ],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/build/bin",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ],
+      "preLaunchTask": "CMake Build",
+      "miDebuggerPath": "/usr/bin/gdb"
+    }
+  ]
+}

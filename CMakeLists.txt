@@ -1,29 +1,39 @@
 cmake_minimum_required(VERSION 3.16)
-project(cef_of_player)
+project(ad-tornado)
 
-# Установка стандарта C++
+# Set C++ standard and compiler
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Пути к CEF и OpenFrameworks
-set(CEF_ROOT "${CMAKE_SOURCE_DIR}/../cef-unpacked")
-set(OF_ROOT "${CMAKE_SOURCE_DIR}/../openFrameworks")
+# Add definitions to disable sound
+add_definitions(
+    -DOF_DISABLE_SOUND
+    -DOF_USING_MPG123
+    -DTARGET_NO_SOUND
+)
 
-# Добавление CEF
+# Paths to dependencies
+set(CEF_ROOT "${CMAKE_SOURCE_DIR}/deps/cef")
+set(OF_ROOT "${CMAKE_SOURCE_DIR}/deps/openFrameworks")
+
+# Add CEF
 include_directories(
     ${CEF_ROOT}
     ${CEF_ROOT}/include
+    ${CMAKE_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/include
 )
 
-# Добавление путей к библиотекам
+# Add link directories
 link_directories(
     ${OF_ROOT}/libs/tess2/lib/linux64
+    ${OF_ROOT}/libs/kiss/lib/linux64
     ${CEF_ROOT}/Release
     ${CEF_ROOT}/build/libcef_dll_wrapper
     /usr/lib/x86_64-linux-gnu
 )
 
-# Добавление OpenFrameworks
+# Add OpenFrameworks
 include_directories(
     ${OF_ROOT}/libs/openFrameworks
     ${OF_ROOT}/libs/openFrameworks/3d
@@ -40,6 +50,13 @@ include_directories(
     ${OF_ROOT}/libs/tess2/include
     ${OF_ROOT}/libs/utf8/include
     ${OF_ROOT}/libs/json/include
+    ${OF_ROOT}/libs/kiss/include
+    ${OF_ROOT}/libs/glew/include
+    ${OF_ROOT}/libs/glfw/include
+    ${OF_ROOT}/libs/freeimage/include
+    ${OF_ROOT}/libs/freetype/include
+    ${OF_ROOT}/libs/sndfile/include
+    ${OF_ROOT}/libs/openal/include
     /usr/include/GL
     /usr/include/freetype2
     /usr/include/cairo
@@ -47,40 +64,23 @@ include_directories(
     /usr/lib/x86_64-linux-gnu/glib-2.0/include
 )
 
-# Добавление исходных файлов
+# Add source files
 set(SOURCES
     src/main.cpp
     src/MainApp.cpp
-    src/CefApp.cpp
-    src/SimpleHandler.cpp
-    kissfft/kiss_fft.c
-    kissfft/kiss_fftr.c
+    src/web/CefBrowserHandler.cpp
+    src/web/CefBrowserApp.cpp
 )
 
-# Добавление заголовочных файлов
-set(HEADERS
-    include/MainApp.h
-    include/CefApp.h
-)
+# Create executable
+add_executable(${PROJECT_NAME} ${SOURCES})
 
-# Создание исполняемого файла
-add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
-
-# Включение директории с заголовочными файлами
-target_include_directories(${PROJECT_NAME} PRIVATE
-    ${CMAKE_SOURCE_DIR}/include
-)
-
-# Линковка с CEF
-target_link_libraries(${PROJECT_NAME} PRIVATE
-    ${CEF_ROOT}/Release/libcef.so
-    ${CEF_ROOT}/build/libcef_dll_wrapper/libcef_dll_wrapper.a
-)
-
-# Линковка с OpenFrameworks и зависимостями
+# Link libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE
     ${OF_ROOT}/libs/openFrameworksCompiled/lib/linux64/libopenFrameworks.a
-    ${OF_ROOT}/libs/tess2/lib/linux64/libtess2.a
+    ${CEF_ROOT}/Release/libcef.so
+    ${CEF_ROOT}/build/libcef_dll_wrapper/libcef_dll_wrapper.a
+    ${OF_ROOT}/libs/kiss/lib/linux64/libkiss.a
     -lGL
     -lGLEW
     -lglfw
@@ -101,55 +101,46 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     -lfreeimage
     -luriparser
     -lcurl
+    -ltess2
     -lopenal
     -lsndfile
 )
 
-# Копирование ресурсов
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_SOURCE_DIR}/assets
-    ${CMAKE_BINARY_DIR}/assets
-)
-
-# Установка выходной директории
+# Set output directory
 set_target_properties(${PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
-add_definitions(
-    -DOF_DISABLE_SOUND
-    -DOF_USING_MPG123
-    -DTARGET_NO_SOUND
-    -Dkiss_fft_scalar=float
+# Copy CEF resources and libraries
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory
+    ${CMAKE_BINARY_DIR}/bin/locales
 )
 
-include_directories(
-    ${PROJECT_SOURCE_DIR}/../cef-unpacked
-    ${PROJECT_SOURCE_DIR}/../cef-unpacked/include
-    ${PROJECT_SOURCE_DIR}/../openFrameworks/libs/openFrameworks
-    ${PROJECT_SOURCE_DIR}/../openFrameworks/libs/openFrameworks/3d
-    ${PROJECT_SOURCE_DIR}/../openFrameworks/libs/openFrameworks/app
-    ${PROJECT_SOURCE_DIR}/../openFrameworks/libs/openFrameworks/communication
-    ${PROJECT_SOURCE_DIR}/../openFrameworks/libs/openFrameworks/events
-    ${PROJECT_SOURCE_DIR}/../openFrameworks/libs/openFrameworks/gl
-    ${PROJECT_SOURCE_DIR}/../openFrameworks/libs/openFrameworks/graphics
-    ${PROJECT_SOURCE_DIR}/../openFrameworks/libs/openFrameworks/math
-    ${PROJECT_SOURCE_DIR}/../openFrameworks/libs/openFrameworks/sound
-    ${PROJECT_SOURCE_DIR}/../openFrameworks/libs/openFrameworks/types
-    ${PROJECT_SOURCE_DIR}/../openFrameworks/libs/openFrameworks/utils
-    ${PROJECT_SOURCE_DIR}/../openFrameworks/libs/openFrameworks/video
-    ${PROJECT_SOURCE_DIR}/../openFrameworks/libs/tess2/include
-    ${PROJECT_SOURCE_DIR}/../openFrameworks/libs/utf8/include
-    ${PROJECT_SOURCE_DIR}/../openFrameworks/libs/json/include
-    ${PROJECT_SOURCE_DIR}/kissfft
-    /usr/include/GL
-    /usr/include/freetype2
-    /usr/include/cairo
-    /usr/include/glib-2.0
-    /usr/lib/x86_64-linux-gnu/glib-2.0/include
-    ${PROJECT_SOURCE_DIR}/include
+# Copy CEF Release files
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CEF_ROOT}/Release/
+    ${CMAKE_BINARY_DIR}/bin/
 )
 
-# Добавляем библиотеку dl
-target_link_libraries(${PROJECT_NAME} PRIVATE dl) 
+# Copy CEF Resources
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CEF_ROOT}/Resources/
+    ${CMAKE_BINARY_DIR}/bin/
+)
+
+# Copy CEF locales
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CEF_ROOT}/Resources/locales/
+    ${CMAKE_BINARY_DIR}/bin/locales/
+)
+
+# Copy data directory
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/data
+    ${CMAKE_BINARY_DIR}/bin/data
+)

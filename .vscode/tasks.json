@@ -1,0 +1,36 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "CMake Configure",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["-B", "${workspaceFolder}/build", "-S", "${workspaceFolder}"],
+      "group": "build"
+    },
+    {
+      "label": "CMake Build",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "${workspaceFolder}/build", "--config", "Debug"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "dependsOn": ["CMake Configure"]
+    },
+    {
+      "label": "Run",
+      "type": "shell",
+      "command": "${workspaceFolder}/build/bin/ad-tornado",
+      "args": [
+        "--html",
+        "data/html/index.html",
+        "--video",
+        "data/video/test.mp4"
+      ],
+      "group": "test",
+      "dependsOn": ["CMake Build"]
+    }
+  ]
+}

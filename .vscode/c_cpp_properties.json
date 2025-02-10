@@ -1,0 +1,41 @@
+{
+  "configurations": [
+    {
+      "name": "Linux",
+      "includePath": [
+        "${workspaceFolder}/**",
+        "${workspaceFolder}/include",
+        "${workspaceFolder}/deps/cef",
+        "${workspaceFolder}/deps/cef/include",
+        "${workspaceFolder}/deps/openFrameworks/libs/openFrameworks",
+        "${workspaceFolder}/deps/openFrameworks/libs/openFrameworks/3d",
+        "${workspaceFolder}/deps/openFrameworks/libs/openFrameworks/app",
+        "${workspaceFolder}/deps/openFrameworks/libs/openFrameworks/communication",
+        "${workspaceFolder}/deps/openFrameworks/libs/openFrameworks/events",
+        "${workspaceFolder}/deps/openFrameworks/libs/openFrameworks/gl",
+        "${workspaceFolder}/deps/openFrameworks/libs/openFrameworks/graphics",
+        "${workspaceFolder}/deps/openFrameworks/libs/openFrameworks/math",
+        "${workspaceFolder}/deps/openFrameworks/libs/openFrameworks/sound",
+        "${workspaceFolder}/deps/openFrameworks/libs/openFrameworks/types",
+        "${workspaceFolder}/deps/openFrameworks/libs/openFrameworks/utils",
+        "${workspaceFolder}/deps/openFrameworks/libs/openFrameworks/video",
+        "${workspaceFolder}/deps/openFrameworks/libs/tess2/include",
+        "${workspaceFolder}/deps/openFrameworks/libs/utf8/include",
+        "${workspaceFolder}/deps/openFrameworks/libs/json/include",
+        "${workspaceFolder}/deps/openFrameworks/libs/kiss/include",
+        "/usr/include/GL",
+        "/usr/include/freetype2",
+        "/usr/include/cairo",
+        "/usr/include/glib-2.0",
+        "/usr/lib/x86_64-linux-gnu/glib-2.0/include"
+      ],
+      "defines": ["OF_DISABLE_SOUND", "OF_USING_MPG123", "TARGET_NO_SOUND"],
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "c11",
+      "cppStandard": "c++17",
+      "intelliSenseMode": "linux-gcc-x64",
+      "configurationProvider": "ms-vscode.cmake-tools"
+    }
+  ],
+  "version": 4
+}

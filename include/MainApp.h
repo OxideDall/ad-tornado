@@ -1,38 +1,26 @@
 #pragma once
 
 #include "ofMain.h"
-#include "CefApp.h"
-#include "SimpleHandler.h"
+#include "web/CefBrowserHandler.h"
+#include "include/cef_app.h"
 
-class MainApp : public ofBaseApp {
+class MainApp : public ofBaseApp
+{
 public:
-    void setup();
-    void update();
-    void draw();
-    void exit();
+    MainApp();
+    ~MainApp();
 
-    void keyPressed(int key);
-    void windowResized(int w, int h);
-    
-    void setCefApp(CefRefPtr<MyCefApp> app) { cefApp = app; }
-    void setMainArgs(int argc, char** argv) { 
-        this->argc = argc;
-        this->argv = argv;
-    }
+    void setup() override;
+    void update() override;
+    void draw() override;
+    void exit() override;
+
+    void setHtmlPath(const std::string &path) { htmlPath = path; }
+    void setVideoPath(const std::string &path) { videoPath = path; }
 
 private:
-    // CEF
-    CefRefPtr<MyCefApp> cefApp;
-    CefRefPtr<SimpleHandler> handler;
-    bool cefInitialized;
-    int argc;
-    char** argv;
-
-    // Video
     ofVideoPlayer videoPlayer;
-    bool videoLoaded;
-
-    // Window dimensions
-    int windowWidth;
-    int windowHeight;
-}; 
+    CefRefPtr<CefBrowserHandler> browserHandler;
+    std::string htmlPath;
+    std::string videoPath;
+};
