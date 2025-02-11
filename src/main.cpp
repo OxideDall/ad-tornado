@@ -25,12 +25,8 @@ int main(int argc, char *argv[])
     ofLogNotice("Main") << "Starting application in main process...";
 
     std::vector<std::string> cef_args = {
-        "--disable-gpu",
-        "--disable-gpu-compositing",
-        "--disable-gpu-vsync",
-        "--disable-accelerated-2d-canvas",
         "--disable-accelerated-video-decode",
-        "--disable-webgl"};
+    };
 
     std::vector<const char *> new_argv;
     new_argv.push_back(argv[0]);
