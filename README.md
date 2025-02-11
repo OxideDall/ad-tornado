@@ -10,6 +10,10 @@ A Linux-only application that combines OpenFrameworks video playback with Chromi
 - Smooth animations and transitions
 - Hardware-accelerated video rendering
 
+## Demo
+
+Check out our demo video: [assets/demo.mp4](assets/demo.mp4)
+
 ## Requirements
 
 - Linux x64 (tested on Ubuntu 20.04+)
@@ -85,3 +89,7 @@ The application structure:
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Roadmap
+
+1. Resolve JS animations support
