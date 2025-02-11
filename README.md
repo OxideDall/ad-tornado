@@ -1,6 +1,6 @@
 # AD-Tornado
 
-A Linux-only application that combines OpenFrameworks video playback with Chromium Embedded Framework (CEF) browser rendering in a single window.
+A desktop application that combines video playback with web content using CEF (Chromium Embedded Framework) and OpenFrameworks.
 
 ## Features
 
@@ -21,6 +21,13 @@ Check out our demo video: [assets/demo.mp4](assets/demo.mp4)
 - CMake 3.10 or later
 - OpenGL 3.2+
 - Git
+
+## Dependencies
+
+```bash
+sudo apt update
+sudo apt install cmake build-essential libglu1-mesa-dev libgtk-3-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libglm-dev
+```
 
 ## Setup
 
