@@ -105,6 +105,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     -ltess2
     -lopenal
     -lsndfile
+    -lmpg123
 )
 
 # Set output directory

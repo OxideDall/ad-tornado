@@ -26,7 +26,7 @@ Check out our demo video: [assets/demo.mp4](assets/demo.mp4)
 
 ```bash
 sudo apt update
-sudo apt install cmake build-essential libglu1-mesa-dev libgtk-3-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libglm-dev
+sudo apt install cmake build-essential libglu1-mesa-dev libgtk-3-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libglm-dev libmpg123-dev
 ```
 
 ## Setup
