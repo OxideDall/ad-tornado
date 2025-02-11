@@ -10,6 +10,7 @@ add_definitions(
     -DOF_DISABLE_SOUND
     -DOF_USING_MPG123
     -DTARGET_NO_SOUND
+    -DCEF_USE_OSR
 )
 
 # Paths to dependencies
@@ -138,9 +139,3 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     ${CMAKE_BINARY_DIR}/bin/locales/
 )
 
-# Copy data directory
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_SOURCE_DIR}/data
-    ${CMAKE_BINARY_DIR}/bin/data
-)

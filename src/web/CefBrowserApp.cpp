@@ -1,6 +1,7 @@
 #include "web/CefBrowserApp.h"
 #include "include/wrapper/cef_helpers.h"
 #include "ofLog.h"
+#include "include/base/cef_bind.h"
 
 void CefBrowserApp::OnBeforeCommandLineProcessing(const CefString &process_type,
                                                   CefRefPtr<CefCommandLine> command_line)
@@ -25,6 +26,14 @@ void CefBrowserApp::OnBeforeCommandLineProcessing(const CefString &process_type,
     command_line->AppendSwitch("disable-web-security");
     command_line->AppendSwitch("allow-file-access-from-files");
     command_line->AppendSwitch("allow-universal-access-from-files");
+    command_line->AppendSwitch("disable-extensions");
+    command_line->AppendSwitch("disable-plugins");
+    command_line->AppendSwitch("disable-pdf-extension");
+    command_line->AppendSwitch("disable-pinch");
+    command_line->AppendSwitch("disable-databases");
+    command_line->AppendSwitch("disable-gpu-shader-disk-cache");
+    command_line->AppendSwitch("disable-javascript-harmony-shipping");
+    command_line->AppendSwitch("disable-javascript");
 }
 
 void CefBrowserApp::OnContextInitialized()
@@ -35,29 +44,20 @@ void CefBrowserApp::OnContextInitialized()
 
 void CefBrowserApp::OnWebKitInitialized()
 {
-    CEF_REQUIRE_RENDERER_THREAD();
     ofLogNotice("CefBrowserApp") << "WebKit initialized";
-
-    // Force a repaint
-    if (browser)
-    {
-        browser->GetHost()->WasResized();
-        browser->GetHost()->Invalidate(PET_VIEW);
-    }
 }
 
 void CefBrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
                                      CefRefPtr<CefFrame> frame,
                                      CefRefPtr<CefV8Context> context)
 {
-    CEF_REQUIRE_RENDERER_THREAD();
     ofLogNotice("CefBrowserApp") << "Context created";
 
-    this->browser = browser;
-
-    // Force a repaint
-    browser->GetHost()->WasResized();
-    browser->GetHost()->Invalidate(PET_VIEW);
+    // Store browser reference
+    if (!this->browser)
+    {
+        this->browser = browser;
+    }
 }
 
 bool CefBrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
@@ -65,7 +65,6 @@ bool CefBrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
                                              CefProcessId source_process,
                                              CefRefPtr<CefProcessMessage> message)
 {
-    CEF_REQUIRE_RENDERER_THREAD();
     ofLogNotice("CefBrowserApp") << "Process message received";
     return false;
 }
