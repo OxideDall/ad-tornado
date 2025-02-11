@@ -1,127 +1,121 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>CEF Test</title>
+    <title>Awesome Animation</title>
     <style>
         body {
             margin: 0;
-            padding: 20px;
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #ff0000;
-            transition: none; /* Remove CSS transition */
+            padding: 0;
             overflow: hidden;
+            background: #000;
         }
-
-        .container {
-            position: relative;
-            animation: float 6s ease-in-out infinite;
-        }
-
-        h1 {
-            color: white;
-            font-size: 48px;
-            text-align: center;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            animation: glow 3s ease-in-out infinite;
-            white-space: nowrap;
-        }
-
-        @keyframes float {
-            0% {
-                transform: translateY(0px) rotate(0deg);
-            }
-            50% {
-                transform: translateY(-20px) rotate(5deg);
-            }
-            100% {
-                transform: translateY(0px) rotate(0deg);
-            }
-        }
-
-        @keyframes glow {
-            0% {
-                text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            }
-            50% {
-                text-shadow: 0 0 20px rgba(255,255,255,0.8),
-                            0 0 30px rgba(255,255,255,0.6),
-                            0 0 40px rgba(255,255,255,0.4);
-            }
-            100% {
-                text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            }
+        canvas {
+            display: block;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>CEF + OpenFrameworks Demo</h1>
-    </div>
+    <canvas id="canvas"></canvas>
     <script>
-        // Simple JavaScript test
-        console.log('JavaScript is running!');
-        
-        // Change background color with smooth transitions
-        const colors = [
-            '#ff0000', // Red
-            '#ff6b00', // Orange
-            '#ffd500', // Yellow
-            '#00ff00', // Green
-            '#0088ff', // Blue
-            '#8400ff'  // Purple
-        ];
-        let currentColor = 0;
-        let currentStep = 0;
-        const STEPS = 30; // Number of steps for smooth transition
-        
-        function interpolateColor(color1, color2, factor) {
-            const r1 = parseInt(color1.substr(1,2), 16);
-            const g1 = parseInt(color1.substr(3,2), 16);
-            const b1 = parseInt(color1.substr(5,2), 16);
-            
-            const r2 = parseInt(color2.substr(1,2), 16);
-            const g2 = parseInt(color2.substr(3,2), 16);
-            const b2 = parseInt(color2.substr(5,2), 16);
-            
-            const r = Math.round(r1 + (r2 - r1) * factor);
-            const g = Math.round(g1 + (g2 - g1) * factor);
-            const b = Math.round(b1 + (b2 - b1) * factor);
-            
-            return `#${(r << 16 | g << 8 | b).toString(16).padStart(6, '0')}`;
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Set canvas size to match window
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
         }
-        
-        function updateBackground() {
-            const fromColor = colors[currentColor];
-            const toColor = colors[(currentColor + 1) % colors.length];
-            
-            // Calculate intermediate color
-            const factor = currentStep / STEPS;
-            const color = interpolateColor(fromColor, toColor, factor);
-            
-            // Update background
-            document.body.style.backgroundColor = color;
-            
-            // Force repaint by temporarily changing transform
-            document.body.style.transform = 'translateZ(0)';
-            setTimeout(() => {
-                document.body.style.transform = '';
-            }, 0);
-            
-            // Update counters
-            currentStep++;
-            if (currentStep >= STEPS) {
-                currentStep = 0;
-                currentColor = (currentColor + 1) % colors.length;
-                console.log('Changed color to:', colors[currentColor]);
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Ball class
+        class Ball {
+            constructor() {
+                this.reset();
+                this.radius = Math.random() * 30 + 10;
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.dx = (Math.random() - 0.5) * 4;
+                this.dy = (Math.random() - 0.5) * 4;
+                this.hue = Math.random() * 360;
+                this.saturation = 80 + Math.random() * 20;
+                this.lightness = 50 + Math.random() * 10;
+                this.alpha = 0.1;
+                this.targetAlpha = 0.6 + Math.random() * 0.4;
+                this.connections = [];
+            }
+
+            update() {
+                // Update position
+                this.x += this.dx;
+                this.y += this.dy;
+
+                // Bounce off walls with smooth transition
+                if (this.x < this.radius || this.x > canvas.width - this.radius) {
+                    this.dx *= -0.9;
+                    this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
+                }
+                if (this.y < this.radius || this.y > canvas.height - this.radius) {
+                    this.dy *= -0.9;
+                    this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
+                }
+
+                // Smooth alpha transition
+                this.alpha += (this.targetAlpha - this.alpha) * 0.1;
+
+                // Slowly change color
+                this.hue = (this.hue + 0.5) % 360;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `hsla(${this.hue}, ${this.saturation}%, ${this.lightness}%, ${this.alpha})`;
+                ctx.fill();
             }
         }
-        
-        // Update every 33ms (approximately 30fps)
-        setInterval(updateBackground, 33);
+
+        // Create balls
+        const balls = Array.from({ length: 20 }, () => new Ball());
+
+        // Animation loop
+        function animate() {
+            // Clear with fade effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Update and draw balls
+            balls.forEach(ball => {
+                ball.update();
+                ball.draw();
+            });
+
+            // Draw connections
+            balls.forEach((ball1, i) => {
+                balls.slice(i + 1).forEach(ball2 => {
+                    const dx = ball2.x - ball1.x;
+                    const dy = ball2.y - ball1.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < 200) {
+                        const alpha = (1 - distance / 200) * 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(ball1.x, ball1.y);
+                        ctx.lineTo(ball2.x, ball2.y);
+                        ctx.strokeStyle = `hsla(${(ball1.hue + ball2.hue) / 2}, 70%, 60%, ${alpha})`;
+                        ctx.stroke();
+                    }
+                });
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        // Start animation
+        animate();
     </script>
 </body>
 </html>

@@ -5,64 +5,14 @@
 #include "include/wrapper/cef_helpers.h"
 
 CefBrowserHandler::CefBrowserHandler()
-    : viewWidth(1280), viewHeight(720), needsTextureUpdate(false), textureId(0), textureReady(false)
+    : viewWidth(1280), viewHeight(720), textureReady(false)
 {
-    pixelBuffer.resize(viewWidth * viewHeight * 4);
+    rgbaBuffer.resize(viewWidth * viewHeight * 4);
 }
 
 CefBrowserHandler::~CefBrowserHandler()
 {
-    deleteTexture();
     CloseBrowser();
-}
-
-void CefBrowserHandler::createTexture()
-{
-    CEF_REQUIRE_UI_THREAD();
-
-    if (textureId != 0)
-    {
-        deleteTexture();
-    }
-
-    GLint last_texture;
-    glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
-
-    glGenTextures(1, &textureId);
-    if (textureId == 0)
-    {
-        return;
-    }
-
-    glBindTexture(GL_TEXTURE_2D, textureId);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, viewWidth, viewHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-
-    if (glGetError() == GL_NO_ERROR)
-    {
-        textureReady = true;
-    }
-    else
-    {
-        deleteTexture();
-    }
-
-    glBindTexture(GL_TEXTURE_2D, last_texture);
-}
-
-void CefBrowserHandler::deleteTexture()
-{
-    CEF_REQUIRE_UI_THREAD();
-
-    if (textureId != 0)
-    {
-        glDeleteTextures(1, &textureId);
-        textureId = 0;
-        textureReady = false;
-    }
 }
 
 void CefBrowserHandler::CloseBrowser()
@@ -103,39 +53,30 @@ void CefBrowserHandler::OnPaint(CefRefPtr<CefBrowser> browser,
 
         if (width != viewWidth || height != viewHeight)
         {
+            ofLogNotice("CefBrowserHandler") << "OnPaint: resizing texture from " << viewWidth << "x" << viewHeight << " to " << width << "x" << height;
             viewWidth = width;
             viewHeight = height;
-            pixelBuffer.resize(width * height * 4);
-            deleteTexture();
+            rgbaBuffer.resize(width * height * 4);
+            browserTexture.clear();
         }
 
-        if (textureId == 0)
-        {
-            createTexture();
-        }
-
-        std::vector<unsigned char> rgbaBuffer(width * height * 4);
+        // Convert BGRA to RGBA silently
         const uint8_t *src = static_cast<const uint8_t *>(buffer);
-
-        for (size_t i = 0; i < width * height; i++)
+        for (size_t i = 0; i < width * height * 4; i += 4)
         {
-            size_t srcIdx = i * 4;
-            size_t dstIdx = i * 4;
-            rgbaBuffer[dstIdx + 0] = src[srcIdx + 2];
-            rgbaBuffer[dstIdx + 1] = src[srcIdx + 1];
-            rgbaBuffer[dstIdx + 2] = src[srcIdx + 0];
-            rgbaBuffer[dstIdx + 3] = src[srcIdx + 3];
+            rgbaBuffer[i + 0] = src[i + 2];
+            rgbaBuffer[i + 1] = src[i + 1];
+            rgbaBuffer[i + 2] = src[i + 0];
+            rgbaBuffer[i + 3] = src[i + 3];
         }
 
-        GLint lastTexture;
-        glGetIntegerv(GL_TEXTURE_BINDING_2D, &lastTexture);
+        if (!browserTexture.isAllocated())
+        {
+            browserTexture.allocate(width, height, GL_RGBA);
+        }
 
-        glBindTexture(GL_TEXTURE_2D, textureId);
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, rgbaBuffer.data());
-        glFinish();
-
-        glBindTexture(GL_TEXTURE_2D, lastTexture);
+        browserTexture.loadData(rgbaBuffer.data(), width, height, GL_RGBA);
+        textureReady = true;
 
         if (browser)
         {
@@ -145,18 +86,15 @@ void CefBrowserHandler::OnPaint(CefRefPtr<CefBrowser> browser,
     catch (const std::exception &e)
     {
         ofLogError("CefBrowserHandler") << "Exception in OnPaint: " << e.what();
+        textureReady = false;
     }
-}
-
-void CefBrowserHandler::updateTexture()
-{
 }
 
 void CefBrowserHandler::OnAfterCreated(CefRefPtr<CefBrowser> browser)
 {
     CEF_REQUIRE_UI_THREAD();
     this->browser = browser;
-    needsTextureUpdate = true;
+    browser->GetHost()->SendExternalBeginFrame();
 }
 
 bool CefBrowserHandler::DoClose(CefRefPtr<CefBrowser> browser)
@@ -189,6 +127,7 @@ void CefBrowserHandler::OnLoadEnd(CefRefPtr<CefBrowser> browser,
     CEF_REQUIRE_UI_THREAD();
     if (browser)
     {
+        browser->GetHost()->WasResized();
         browser->GetHost()->Invalidate(PET_VIEW);
         browser->GetHost()->SendExternalBeginFrame();
     }
@@ -214,11 +153,13 @@ void CefBrowserHandler::setSize(int width, int height)
     {
         viewWidth = width;
         viewHeight = height;
-        pixelBuffer.resize(width * height * 4);
-        deleteTexture();
+        rgbaBuffer.resize(width * height * 4);
+        browserTexture.clear();
         if (browser)
         {
             browser->GetHost()->WasResized();
+            browser->GetHost()->Invalidate(PET_VIEW);
+            browser->GetHost()->SendExternalBeginFrame();
         }
     }
 }

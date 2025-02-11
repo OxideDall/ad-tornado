@@ -1,3 +1,4 @@
+#include "ofMain.h"
 #include "MainApp.h"
 #include <filesystem>
 #include "include/cef_app.h"
@@ -46,7 +47,7 @@ void MainApp::setup()
     CefBrowserSettings browser_settings;
     browser_settings.windowless_frame_rate = 60;
     browser_settings.background_color = CefColorSetARGB(255, 255, 255, 255);
-    browser_settings.webgl = STATE_DISABLED;
+    browser_settings.webgl = STATE_ENABLED;
     browser_settings.javascript = STATE_ENABLED;
     browser_settings.local_storage = STATE_ENABLED;
     browser_settings.databases = STATE_ENABLED;
@@ -66,16 +67,16 @@ void MainApp::update()
         videoPlayer.update();
     }
 
+    // Process CEF messages
     CefDoMessageLoopWork();
 
+    // Ensure smooth animations by sending multiple begin frame signals
     if (browserHandler && browserHandler->getBrowser())
     {
-        browserHandler->getBrowser()->GetHost()->SendExternalBeginFrame();
-    }
-
-    if (browserHandler)
-    {
-        browserHandler->updateTexture();
+        for (int i = 0; i < 2; i++)
+        { // Send multiple frames per update
+            browserHandler->getBrowser()->GetHost()->SendExternalBeginFrame();
+        }
     }
 }
 
@@ -87,17 +88,8 @@ void MainApp::draw()
     {
         ofPushMatrix();
         ofSetColor(255);
-
-        ofTexture tex;
-        tex.setUseExternalTextureID(browserHandler->getTextureId());
-        tex.texData.width = browserHandler->getWidth();
-        tex.texData.height = browserHandler->getHeight();
-        tex.texData.tex_w = browserHandler->getWidth();
-        tex.texData.tex_h = browserHandler->getHeight();
-        tex.texData.textureTarget = GL_TEXTURE_2D;
-        tex.texData.glInternalFormat = GL_RGBA8;
-
-        tex.draw(0, 0, ofGetWidth(), ofGetHeight() / 2);
+        float browserHeight = ofGetHeight() / 2; // Take half of the screen
+        browserHandler->getTexture().draw(0, 0, ofGetWidth(), browserHeight);
         ofPopMatrix();
     }
 

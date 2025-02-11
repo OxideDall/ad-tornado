@@ -22,12 +22,11 @@ public:
     void setup(const std::string &url);
     void setSize(int width, int height);
     void CloseBrowser();
-    void updateTexture();
-    GLuint getTextureId() const { return textureId; }
-    bool isTextureReady() const { return textureReady && textureId != 0; }
+    bool isTextureReady() const { return textureReady; }
     int getWidth() const { return viewWidth; }
     int getHeight() const { return viewHeight; }
     CefRefPtr<CefBrowser> getBrowser() { return browser; }
+    ofTexture &getTexture() { return browserTexture; }
 
     // CefClient methods
     virtual CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override { return this; }
@@ -66,19 +65,14 @@ public:
                                   const CefString &source,
                                   int line) override;
 
-    // Texture management
-    void createTexture();
-    void deleteTexture();
-
 private:
     CefRefPtr<CefBrowser> browser;
-    GLuint textureId;
     std::mutex textureMutex;
-    std::vector<unsigned char> pixelBuffer;
+    std::vector<unsigned char> rgbaBuffer;
     int viewWidth;
     int viewHeight;
-    bool needsTextureUpdate;
     bool textureReady;
+    ofTexture browserTexture;
 
     IMPLEMENT_REFCOUNTING(CefBrowserHandler);
     DISALLOW_COPY_AND_ASSIGN(CefBrowserHandler);

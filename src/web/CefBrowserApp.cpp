@@ -8,9 +8,6 @@ void CefBrowserApp::OnBeforeCommandLineProcessing(const CefString &process_type,
 {
     command_line->AppendSwitch("off-screen-rendering-enabled");
     command_line->AppendSwitch("in-process-gpu");
-    command_line->AppendSwitch("disable-d3d11");
-    command_line->AppendSwitch("enable-begin-frame-scheduling");
-    command_line->AppendSwitch("disable-smooth-scrolling");
     command_line->AppendSwitch("no-sandbox");
     command_line->AppendSwitch("disable-web-security");
     command_line->AppendSwitch("allow-file-access-from-files");
@@ -19,8 +16,7 @@ void CefBrowserApp::OnBeforeCommandLineProcessing(const CefString &process_type,
     command_line->AppendSwitch("disable-plugins");
     command_line->AppendSwitch("disable-pdf-extension");
     command_line->AppendSwitch("disable-pinch");
-    command_line->AppendSwitch("disable-databases");
-    command_line->AppendSwitch("disable-gpu-shader-disk-cache");
+    command_line->AppendSwitch("enable-begin-frame-scheduling");
 }
 
 void CefBrowserApp::OnContextInitialized()
