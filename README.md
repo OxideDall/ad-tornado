@@ -1,82 +1,87 @@
-# CEF + OpenFrameworks Video Player
+# AD-Tornado
 
-An application that displays a web page with JS animation in the top half of the window and video in the bottom half.
+A Linux-only application that combines OpenFrameworks video playback with Chromium Embedded Framework (CEF) browser rendering in a single window.
+
+## Features
+
+- Fullscreen display with split layout
+- Video playback in the bottom half
+- Interactive HTML content in the top half
+- Smooth animations and transitions
+- Hardware-accelerated video rendering
 
 ## Requirements
 
-- CMake 3.16 or higher
-- C++17 compatible compiler
-- CEF (Chromium Embedded Framework)
-- OpenFrameworks
-- GStreamer codecs:
-  - gstreamer1.0-libav
-  - gstreamer1.0-plugins-good
-  - gstreamer1.0-plugins-bad
+- Linux x64 (tested on Ubuntu 20.04+)
+- GCC 6 or later
+- CMake 3.10 or later
+- OpenGL 3.2+
+- Git
 
-On Ubuntu/Debian systems, install the codecs with:
+## Setup
 
-```bash
-sudo apt-get install gstreamer1.0-libav gstreamer1.0-plugins-good gstreamer1.0-plugins-bad
-```
-
-## Project Structure
-
-```
-.
-├── assets/             # Resources (HTML, video)
-├── include/            # Header files
-├── src/               # Source files
-├── scripts/           # Helper scripts
-└── CMakeLists.txt    # CMake configuration
-```
-
-## Building
-
-1. Make sure CEF and OpenFrameworks are installed in the parent directory:
-
-   ```
-   parent_dir/
-   ├── cef/
-   ├── of/
-   └── this_project/
-   ```
-
-2. Create a build directory and navigate to it:
-
-   ```bash
-   mkdir build
-   cd build
-   ```
-
-3. Configure the project with CMake:
-
-   ```bash
-   cmake ..
-   ```
-
-4. Build:
-   ```bash
-   make
-   ```
-
-## Running
-
-After successful build, run the application:
+1. Clone the repository:
 
 ```bash
-./bin/cef_of_player
+git clone https://github.com/yourusername/ad-tornado.git
+cd ad-tornado
 ```
 
-## Controls
+2. Download and setup dependencies:
 
-- F - toggle fullscreen mode
-- ESC - exit application
+```bash
+chmod +x deps.sh
+./deps.sh
+```
 
-## Known Issues
+3. Build OpenFrameworks:
+   Follow the instructions in `deps/openFrameworks/INSTALL.md` to build OpenFrameworks for your system.
 
-- First launch may take some time for CEF initialization
-- In fullscreen mode, there might be a slight delay when updating the web page
+4. Build CEF:
+
+```bash
+cd deps/cef
+cmake -B build .
+cmake --build build
+cd ../..
+```
+
+5. Build the application:
+
+```bash
+chmod +x build.sh run.sh
+./build.sh
+```
+
+## Usage
+
+Run the application with required HTML and video paths:
+
+```bash
+./run.sh
+```
+
+Or manually:
+
+```bash
+./build/bin/ad-tornado --html path/to/index.html --video path/to/video.mp4
+```
+
+### Command Line Arguments
+
+- `--html <path>` : Path to HTML file (required)
+- `--video <path>` : Path to video file (required)
+- `--help` : Show usage information
+
+## Development
+
+The application structure:
+
+- `src/` - Source files
+- `include/` - Header files
+- `assets/` - Default HTML and video files
+- `deps/` - Dependencies (OpenFrameworks and CEF)
 
 ## License
 
-MIT
+This project is licensed under the MIT License - see the LICENSE file for details.

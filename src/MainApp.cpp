@@ -4,7 +4,6 @@
 #include "web/CefBrowserHandler.h"
 #include <stdexcept>
 #include <GLFW/glfw3.h>
-#include <chrono>
 
 MainApp::MainApp()
     : browserHandler(new CefBrowserHandler())
@@ -17,38 +16,31 @@ MainApp::~MainApp()
 
 void MainApp::setup()
 {
-    // Setup OpenGL first
     ofSetVerticalSync(true);
     ofSetFrameRate(60);
     ofSetFullscreen(true);
 
-    // Convert paths to absolute
     std::string absoluteVideoPath = std::filesystem::canonical(videoPath).generic_string();
     std::string absoluteHtmlPath = std::filesystem::canonical(htmlPath).generic_string();
 
-    // Setup video player first
     if (!std::filesystem::exists(absoluteVideoPath))
     {
-        ofLogError("MainApp") << "Failed to load video: " << absoluteVideoPath;
-        throw std::runtime_error("Failed to load video");
+        throw std::runtime_error("Failed to load video: " + absoluteVideoPath);
     }
 
     if (!videoPlayer.load(absoluteVideoPath))
     {
-        ofLogError("MainApp") << "Failed to load video";
         throw std::runtime_error("Failed to load video");
     }
 
     videoPlayer.play();
     videoPlayer.setLoopState(OF_LOOP_NORMAL);
 
-    // Setup browser last
     CefWindowInfo window_info;
     window_info.SetAsWindowless(0);
     window_info.shared_texture_enabled = false;
     window_info.external_begin_frame_enabled = true;
 
-    // Set browser size to half screen height
     browserHandler->setSize(ofGetWidth(), ofGetHeight() / 2);
 
     CefBrowserSettings browser_settings;
@@ -61,17 +53,9 @@ void MainApp::setup()
 
     std::string url = "file://" + absoluteHtmlPath;
 
-    // Create browser asynchronously
-    if (!CefBrowserHost::CreateBrowser(
-            window_info,
-            browserHandler,
-            url,
-            browser_settings,
-            nullptr,
-            nullptr))
+    if (!CefBrowserHost::CreateBrowser(window_info, browserHandler, url, browser_settings, nullptr, nullptr))
     {
-        ofLogError("MainApp") << "Failed to create browser";
-        return;
+        throw std::runtime_error("Failed to create browser");
     }
 }
 
@@ -82,16 +66,13 @@ void MainApp::update()
         videoPlayer.update();
     }
 
-    // Process CEF messages in single-threaded mode
     CefDoMessageLoopWork();
 
-    // Request frame from CEF browser
     if (browserHandler && browserHandler->getBrowser())
     {
         browserHandler->getBrowser()->GetHost()->SendExternalBeginFrame();
     }
 
-    // Update browser texture if needed
     if (browserHandler)
     {
         browserHandler->updateTexture();
@@ -102,7 +83,6 @@ void MainApp::draw()
 {
     ofClear(0);
 
-    // Draw browser in top half
     if (browserHandler && browserHandler->isTextureReady())
     {
         ofPushMatrix();
@@ -121,7 +101,6 @@ void MainApp::draw()
         ofPopMatrix();
     }
 
-    // Draw video in bottom half
     if (videoPlayer.isLoaded())
     {
         videoPlayer.draw(0, ofGetHeight() / 2, ofGetWidth(), ofGetHeight() / 2);
