@@ -20,7 +20,7 @@ public:
     ~CefBrowserHandler();
 
     void setup(const std::string &url);
-    void resize(int width, int height);
+    void setSize(int width, int height);
     void CloseBrowser();
     void updateTexture();
     GLuint getTextureId() const { return textureId; }

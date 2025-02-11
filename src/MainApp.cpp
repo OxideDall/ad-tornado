@@ -9,41 +9,27 @@
 MainApp::MainApp()
     : browserHandler(new CefBrowserHandler())
 {
-    ofLogNotice("MainApp") << "Constructor called";
 }
 
 MainApp::~MainApp()
 {
-    ofLogNotice("MainApp") << "Destructor called";
 }
 
 void MainApp::setup()
 {
-    ofLogNotice("MainApp") << "Setup started";
-
     // Setup OpenGL first
     ofSetVerticalSync(true);
     ofSetFrameRate(60);
-
-    // Check OpenGL context
-    GLint major, minor;
-    glGetIntegerv(GL_MAJOR_VERSION, &major);
-    glGetIntegerv(GL_MINOR_VERSION, &minor);
-    ofLogNotice("MainApp") << "OpenGL version: " << major << "." << minor;
+    ofSetFullscreen(true);
 
     // Convert paths to absolute
-    std::string currentPath = std::filesystem::current_path().string();
     std::string absoluteVideoPath = std::filesystem::canonical(videoPath).generic_string();
     std::string absoluteHtmlPath = std::filesystem::canonical(htmlPath).generic_string();
-
-    ofLogNotice("MainApp") << "Current path: " << currentPath;
-    ofLogNotice("MainApp") << "Absolute HTML path: " << absoluteHtmlPath;
-    ofLogNotice("MainApp") << "HTML file exists: " << (std::filesystem::exists(absoluteHtmlPath) ? "Yes" : "No");
 
     // Setup video player first
     if (!std::filesystem::exists(absoluteVideoPath))
     {
-        ofLogError("MainApp") << "Video file not found: " << absoluteVideoPath;
+        ofLogError("MainApp") << "Failed to load video: " << absoluteVideoPath;
         throw std::runtime_error("Failed to load video");
     }
 
@@ -53,7 +39,6 @@ void MainApp::setup()
         throw std::runtime_error("Failed to load video");
     }
 
-    ofLogNotice("MainApp") << "Video loaded: " << absoluteVideoPath;
     videoPlayer.play();
     videoPlayer.setLoopState(OF_LOOP_NORMAL);
 
@@ -62,6 +47,9 @@ void MainApp::setup()
     window_info.SetAsWindowless(0);
     window_info.shared_texture_enabled = false;
     window_info.external_begin_frame_enabled = true;
+
+    // Set browser size to half screen height
+    browserHandler->setSize(ofGetWidth(), ofGetHeight() / 2);
 
     CefBrowserSettings browser_settings;
     browser_settings.windowless_frame_rate = 60;
@@ -72,7 +60,6 @@ void MainApp::setup()
     browser_settings.databases = STATE_ENABLED;
 
     std::string url = "file://" + absoluteHtmlPath;
-    ofLogNotice("MainApp") << "Loading URL: " << url;
 
     // Create browser asynchronously
     if (!CefBrowserHost::CreateBrowser(
@@ -86,9 +73,6 @@ void MainApp::setup()
         ofLogError("MainApp") << "Failed to create browser";
         return;
     }
-
-    ofLogNotice("MainApp") << "Browser creation initiated";
-    ofLogNotice("MainApp") << "Setup completed";
 }
 
 void MainApp::update()
@@ -111,20 +95,6 @@ void MainApp::update()
     if (browserHandler)
     {
         browserHandler->updateTexture();
-
-        // Log browser status periodically
-        static int frameCount = 0;
-        if (++frameCount % 60 == 0) // Every ~1 second
-        {
-            if (browserHandler->getBrowser())
-            {
-                ofLogNotice("MainApp") << "Browser is active, texture ready: " << (browserHandler->isTextureReady() ? "Yes" : "No");
-            }
-            else
-            {
-                ofLogNotice("MainApp") << "Browser is not active";
-            }
-        }
     }
 }
 
@@ -132,21 +102,12 @@ void MainApp::draw()
 {
     ofClear(0);
 
-    float videoHeight = ofGetHeight() / 2;
-    if (videoPlayer.isLoaded())
-    {
-        videoPlayer.draw(0, videoHeight, ofGetWidth(), videoHeight);
-    }
-
+    // Draw browser in top half
     if (browserHandler && browserHandler->isTextureReady())
     {
-        ofLogVerbose("MainApp") << "Drawing browser texture";
-
-        // Use OF's built-in methods for drawing textures
         ofPushMatrix();
         ofSetColor(255);
 
-        // Create a temporary texture wrapper
         ofTexture tex;
         tex.setUseExternalTextureID(browserHandler->getTextureId());
         tex.texData.width = browserHandler->getWidth();
@@ -156,14 +117,14 @@ void MainApp::draw()
         tex.texData.textureTarget = GL_TEXTURE_2D;
         tex.texData.glInternalFormat = GL_RGBA8;
 
-        // Draw the texture using OF's methods
-        tex.draw(0, 0, ofGetWidth(), videoHeight);
-
+        tex.draw(0, 0, ofGetWidth(), ofGetHeight() / 2);
         ofPopMatrix();
     }
-    else
+
+    // Draw video in bottom half
+    if (videoPlayer.isLoaded())
     {
-        ofLogNotice("MainApp") << "Browser texture not ready";
+        videoPlayer.draw(0, ofGetHeight() / 2, ofGetWidth(), ofGetHeight() / 2);
     }
 }
 

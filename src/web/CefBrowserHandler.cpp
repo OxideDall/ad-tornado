@@ -7,13 +7,11 @@
 CefBrowserHandler::CefBrowserHandler()
     : viewWidth(1280), viewHeight(720), needsTextureUpdate(false), textureId(0), textureReady(false)
 {
-    ofLogNotice("CefBrowserHandler") << "Created with size: " << viewWidth << "x" << viewHeight;
     pixelBuffer.resize(viewWidth * viewHeight * 4);
 }
 
 CefBrowserHandler::~CefBrowserHandler()
 {
-    ofLogNotice("CefBrowserHandler") << "Destructor called";
     deleteTexture();
     CloseBrowser();
 }
@@ -59,7 +57,6 @@ void CefBrowserHandler::createTexture()
     }
     else
     {
-        ofLogNotice("CefBrowserHandler") << "Texture created successfully: " << textureId;
         textureReady = true;
     }
 
@@ -76,7 +73,6 @@ void CefBrowserHandler::deleteTexture()
         glDeleteTextures(1, &textureId);
         textureId = 0;
         textureReady = false;
-        ofLogNotice("CefBrowserHandler") << "Texture deleted";
     }
 }
 
@@ -84,7 +80,6 @@ void CefBrowserHandler::CloseBrowser()
 {
     if (browser)
     {
-        ofLogNotice("CefBrowserHandler") << "Closing browser";
         browser->GetHost()->CloseBrowser(true);
         browser = nullptr;
     }
@@ -93,12 +88,10 @@ void CefBrowserHandler::CloseBrowser()
 void CefBrowserHandler::GetViewRect(CefRefPtr<CefBrowser> browser, CefRect &rect)
 {
     CEF_REQUIRE_UI_THREAD();
-
     rect.x = 0;
     rect.y = 0;
     rect.width = viewWidth;
     rect.height = viewHeight;
-    ofLogNotice("CefBrowserHandler") << "GetViewRect called: " << viewWidth << "x" << viewHeight;
 }
 
 void CefBrowserHandler::OnPaint(CefRefPtr<CefBrowser> browser,
@@ -112,32 +105,15 @@ void CefBrowserHandler::OnPaint(CefRefPtr<CefBrowser> browser,
 
     if (!buffer || width <= 0 || height <= 0)
     {
-        ofLogWarning("CefBrowserHandler") << "OnPaint called with invalid buffer or dimensions";
         return;
     }
 
     try
     {
-        static int frameCount = 0;
-        frameCount++;
-
-        // Log every 30th frame to avoid spam
-        if (frameCount % 30 == 0)
-        {
-            const uint8_t *pixels = static_cast<const uint8_t *>(buffer);
-            ofLogNotice("CefBrowserHandler") << "OnPaint frame " << frameCount
-                                             << ", first pixel (BGRA): "
-                                             << (int)pixels[0] << ", "
-                                             << (int)pixels[1] << ", "
-                                             << (int)pixels[2] << ", "
-                                             << (int)pixels[3];
-        }
-
         std::lock_guard<std::mutex> lock(textureMutex);
 
         if (width != viewWidth || height != viewHeight)
         {
-            ofLogNotice("CefBrowserHandler") << "Resizing buffer from " << viewWidth << "x" << viewHeight << " to " << width << "x" << height;
             viewWidth = width;
             viewHeight = height;
             pixelBuffer.resize(width * height * 4);
@@ -199,26 +175,19 @@ void CefBrowserHandler::updateTexture()
 void CefBrowserHandler::OnAfterCreated(CefRefPtr<CefBrowser> browser)
 {
     CEF_REQUIRE_UI_THREAD();
-
-    ofLogNotice("CefBrowserHandler") << "OnAfterCreated called";
     this->browser = browser;
-
-    // Schedule initial paint for next update
     needsTextureUpdate = true;
-    ofLogNotice("CefBrowserHandler") << "Initial paint scheduled";
 }
 
 bool CefBrowserHandler::DoClose(CefRefPtr<CefBrowser> browser)
 {
     CEF_REQUIRE_UI_THREAD();
-    ofLogNotice("CefBrowserHandler") << "DoClose called";
     return false;
 }
 
 void CefBrowserHandler::OnBeforeClose(CefRefPtr<CefBrowser> browser)
 {
     CEF_REQUIRE_UI_THREAD();
-    ofLogNotice("CefBrowserHandler") << "OnBeforeClose called";
     this->browser = nullptr;
 }
 
@@ -239,9 +208,6 @@ void CefBrowserHandler::OnLoadEnd(CefRefPtr<CefBrowser> browser,
                                   int httpStatusCode)
 {
     CEF_REQUIRE_UI_THREAD();
-    ofLogNotice("CefBrowserHandler") << "Page loaded with status code: " << httpStatusCode;
-
-    // Force a repaint after page load
     if (browser)
     {
         browser->GetHost()->Invalidate(PET_VIEW);
@@ -255,28 +221,25 @@ bool CefBrowserHandler::OnConsoleMessage(CefRefPtr<CefBrowser> browser,
                                          const CefString &source,
                                          int line)
 {
-    std::string levelStr;
-    switch (level)
+    if (level == LOGSEVERITY_ERROR)
     {
-    case LOGSEVERITY_DEBUG:
-        levelStr = "DEBUG";
-        break;
-    case LOGSEVERITY_INFO:
-        levelStr = "INFO";
-        break;
-    case LOGSEVERITY_WARNING:
-        levelStr = "WARNING";
-        break;
-    case LOGSEVERITY_ERROR:
-        levelStr = "ERROR";
-        break;
-    default:
-        levelStr = "UNKNOWN";
+        ofLogError("JavaScript") << message.ToString();
     }
-
-    ofLogNotice("JavaScript") << "[" << levelStr << "] "
-                              << "Console message from " << source.ToString()
-                              << " (line " << line << "): "
-                              << message.ToString();
     return true;
+}
+
+void CefBrowserHandler::setSize(int width, int height)
+{
+    std::lock_guard<std::mutex> lock(textureMutex);
+    if (width != viewWidth || height != viewHeight)
+    {
+        viewWidth = width;
+        viewHeight = height;
+        pixelBuffer.resize(width * height * 4);
+        deleteTexture();
+        if (browser)
+        {
+            browser->GetHost()->WasResized();
+        }
+    }
 }

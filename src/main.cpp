@@ -9,8 +9,8 @@
 void printUsage()
 {
     std::cout << "Usage: " << std::endl;
-    std::cout << "  --html <path>  : Path to HTML file (default: data/html/index.html)" << std::endl;
-    std::cout << "  --video <path> : Path to video file (default: data/video/test.mp4)" << std::endl;
+    std::cout << "  --html <path>  : Path to HTML file (required)" << std::endl;
+    std::cout << "  --video <path> : Path to video file (required)" << std::endl;
 }
 
 int main(int argc, char *argv[])
@@ -55,8 +55,10 @@ int main(int argc, char *argv[])
     int new_argc = new_argv.size();
 
     // Parse command line arguments
-    std::string htmlPath = "data/html/index.html";
-    std::string videoPath = "data/video/test.mp4";
+    std::string htmlPath;
+    std::string videoPath;
+    bool htmlPathSet = false;
+    bool videoPathSet = false;
 
     for (int i = 1; i < argc; i++)
     {
@@ -64,11 +66,13 @@ int main(int argc, char *argv[])
         if (arg == "--html" && i + 1 < argc)
         {
             htmlPath = argv[++i];
+            htmlPathSet = true;
             ofLogNotice("Main") << "HTML path set to: " << htmlPath;
         }
         else if (arg == "--video" && i + 1 < argc)
         {
             videoPath = argv[++i];
+            videoPathSet = true;
             ofLogNotice("Main") << "Video path set to: " << videoPath;
         }
         else if (arg == "--help" || arg == "-h")
@@ -76,6 +80,14 @@ int main(int argc, char *argv[])
             printUsage();
             return 0;
         }
+    }
+
+    // Check if both paths are provided
+    if (!htmlPathSet || !videoPathSet)
+    {
+        ofLogError("Main") << "Both HTML and video paths must be provided!";
+        printUsage();
+        return 1;
     }
 
     ofLogNotice("Main") << "Initializing CEF...";
